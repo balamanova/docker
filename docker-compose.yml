@@ -1,0 +1,79 @@
+version: "3.0"
+services:
+    eureka-service:
+        container_name: eureka-service
+        image: eureka-service:latest
+        ports:
+            - 8761:8761
+    zuul-service:
+        container_name: zuul-service 
+        image: zuul-service:latest
+        ports:
+            - 8762:8762
+        depends_on:
+            - eureka-service 
+    kindergarden-payment-registry:
+        container_name: kindergarden-payment-registry 
+        build: ./kindergarden-payment-registry
+        depends_on:
+            - eureka-service 
+        ports:
+            - 8083:8083
+        
+    kindergarden-staff:
+        # container_name: kindergarden-staff 
+        # build: ./kindergarden-staff
+        # depends_on:
+        #     - eureka-service 
+        # ports:
+        #     - 8083:8083
+        container_name: kindergarden-staff 
+        image: kindergarden-staff:latest
+        depends_on:
+            - eureka-service 
+        ports:
+            - 8084:8084
+    kindergarden-children:
+        container_name: kindergarden-children 
+        image: kindergarden-children:latest
+        depends_on:
+            - eureka-service 
+        ports:
+            - 8081:8081   
+    auth-service:
+        container_name: auth-service 
+        image: auth-service:latest
+        depends_on:
+            - eureka-service        
+        ports:
+            - 9100:9100
+    kindergarden-admin:
+        container_name: kindergarden-admin   
+        image: kindergarden-admin:latest
+        depends_on:
+            - eureka-service        
+        ports: 
+            - 8085:8085
+    # front:
+    #     container_name: front 
+    #     image: front:latest
+    #     ports:
+    #         - 3000:3000   
+    #     environment:
+    #         - NODE_ENV=development
+    # kindergarden-admin:
+    #     container_name: kindergarden-admin 
+    #     build: ./kindergarden-admin
+    #     image: kindergarden-admin:latest
+    #     ports:
+    #         - 8085:8085
+    #     environment:
+    #      - REGISTRY_HOST=eureka-service
+    #     tty: 
+    #         true
+    #     restart:
+    #        unless-stopped
+networks:
+    default:
+        external: 
+            name: network_kindergarden
