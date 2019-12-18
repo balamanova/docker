@@ -10,7 +10,8 @@ RUN <pre>docker compose up -d</pre>
 </li>
 And wait
 </ul>
-
+<h6>my microservices structure </h6>
+<img src = "https://github.com/balamanova/docker/blob/master/micro.png?raw=true" />
 <br>1.    Choose a project topic
 <p>“Kindergarden” system for accountants and nurses</p>
 <br>2.    Logically split your project into small-gained components with well-defined boundaries of responsibility (at least 4 microservices).
