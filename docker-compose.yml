@@ -1,36 +1,52 @@
-version: "3.0"
+version: "3.2"
 services:
+    zookeeper:
+        container_name: zookeeper
+        image: wurstmeister/zookeeper:3.4.6
+        ports:
+            - 2181:2181
+    kafka:
+        image: wurstmeister/kafka:latest
+        container_name: kafka
+        ports:
+            - 9094:9094
+        environment:
+            HOSTNAME_COMMAND: "docker info | grep ^Name: | cut -d' ' -f 2"
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+            KAFKA_LISTENER_SECURITY_PROTOCOL_MAP: INSIDE:PLAINTEXT,OUTSIDE:PLAINTEXT
+            KAFKA_ADVERTISED_LISTENERS: INSIDE://:9092,OUTSIDE://_{HOSTNAME_COMMAND}:9094
+            KAFKA_LISTENERS: INSIDE://:9092,OUTSIDE://:9094
+            KAFKA_INTER_BROKER_LISTENER_NAME: INSIDE
+            KAFKA_PORT: 9092
+            KAFKA_CREATE_TOPICS: "requesttopic:1:1,replytopic:1:1"
+            KAFKA_ZOOKEEPER_CONNECT: zookeeper:2181
+            KAFKA_JMX_PORT: 7071
+        volumes:
+        - /var/run/docker.sock:/var/run/docker.sock 
+    elk:
+        build: ./elk
+        ports:
+            - "9200:9200"
+            - "8200:80"
+            - "5000:5000/udp"
     eureka-service:
         container_name: eureka-service
-        image: eureka-service:latest
+        image: eureka-service:latest  
         ports:
             - 8761:8761
+        restart: on-failure
     zuul-service:
         container_name: zuul-service 
         image: zuul-service:latest
-        ports:
-            - 8762:8762
         depends_on:
-            - eureka-service 
-    kindergarden-payment-registry:
-        container_name: kindergarden-payment-registry 
-        build: ./kindergarden-payment-registry
-        depends_on:
-            - eureka-service 
+            - eureka-service
         ports:
-            - 8083:8083
-        
+            - 8762:8762     
     kindergarden-staff:
-        # container_name: kindergarden-staff 
-        # build: ./kindergarden-staff
-        # depends_on:
-        #     - eureka-service 
-        # ports:
-        #     - 8083:8083
         container_name: kindergarden-staff 
-        image: kindergarden-staff:latest
+        image: kindergarden-staff:latest     
         depends_on:
-            - eureka-service 
+            - eureka-service
         ports:
             - 8084:8084
     kindergarden-children:
@@ -39,19 +55,27 @@ services:
         depends_on:
             - eureka-service 
         ports:
-            - 8081:8081   
+            - 8081:8081 
+    kindergarden-payment-registry:
+        container_name: kindergarden-payment-registry 
+        image: kindergarden-payment-registry:latest
+        depends_on:
+            - eureka-service
+        ports:
+            - 8083:8083
     auth-service:
         container_name: auth-service 
-        image: auth-service:latest
+        image: auth-service:latest 
         depends_on:
-            - eureka-service        
+            - eureka-service 
         ports:
             - 9100:9100
+        restart: on-failure
     kindergarden-admin:
         container_name: kindergarden-admin   
         image: kindergarden-admin:latest
         depends_on:
-            - eureka-service        
+            - eureka-service
         ports: 
             - 8085:8085
     # front:
@@ -61,18 +85,6 @@ services:
     #         - 3000:3000   
     #     environment:
     #         - NODE_ENV=development
-    # kindergarden-admin:
-    #     container_name: kindergarden-admin 
-    #     build: ./kindergarden-admin
-    #     image: kindergarden-admin:latest
-    #     ports:
-    #         - 8085:8085
-    #     environment:
-    #      - REGISTRY_HOST=eureka-service
-    #     tty: 
-    #         true
-    #     restart:
-    #        unless-stopped
 networks:
     default:
         external: 
